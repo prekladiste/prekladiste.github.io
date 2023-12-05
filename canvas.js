@@ -231,7 +231,7 @@ class Board { // gameBoard
                             if (this.selected[0] === x && this.selected[1] === y) {
                                 c.fillStyle = "yellow";
                                 break; // stops rendering if the selected box is yellow
-                            } else if (newCoordinates && newCoordinates[0] === x && newCoordinates[1] === y && !(this.moveType === 3 && this.grid[this.selected[1]][this.selected[0]] !== this.units.your.slider[0])) { // ... except uMove for special unit // TODO err unit. ... you know
+                            } else if (newCoordinates && newCoordinates[0] === x && newCoordinates[1] === y && !(this.moveType === 3 && this.grid[this.selected[1]][this.selected[0]] !== this.units.your.slider[0])) { // ... except uMove for special unit
                                 c.fillStyle = "orange";
                                 break; // Stops rendering if the box is orange at the new coordinates
                             }
@@ -506,13 +506,10 @@ class Board { // gameBoard
                         possibleMoves.push(12); // it can always turn right
                     }
 
-
-
-
-                    if (possibleMoves.length > 0) { // if any moves need to be added
+                    if (possibleMoves !== undefined && possibleMoves.length > 0) { // if any moves need to be added
                         this.moves[`${x}${y}`] = possibleMoves; // adds them
                     }
-                    if (uMoves.some(element => element !== 0)) {// if any uMoves need to be added
+                    if (uMoves !== undefined && uMoves.some(element => element !== 0)) {// if any uMoves need to be added
                         this.moves[`u${x}${y}`] = uMoves; // adds them
                     }
                 }
@@ -524,6 +521,13 @@ class Board { // gameBoard
         const y = pos[1];
         let endedBy0 = false;
         let finalPosition = undefined;
+        const breakUp = (unit) => {
+            if (Object.values(this.units.your).some(units => units.includes(unit))) { // your units
+                return this.units.your.slider[0];
+            } else if (Object.values(this.units.enemy).some(units => units.includes(unit))) { // enemy units
+                return this.units.enemy.slider[0];
+            }
+        }
         switch (act) {
             case 0: // box inserting
                 this.grid[y][x] = 1;
@@ -622,7 +626,7 @@ class Board { // gameBoard
                 finalPosition = `${x}${y - 1}`;
                 this.grid[using[1]][using[0]] = 0; // remove the box (cost of this move)
 
-                this.queue.push(this.grid[y - 1][x]); // captured unit is inserted to queue
+                this.queue.push(breakUp(this.grid[y - 1][x])); // captured unit is inserted to queue
                 this.grid[y - 1][x] = this.grid[y][x]; // moves with your units
                 this.grid[y][x] = 0;
                 break;
@@ -630,7 +634,7 @@ class Board { // gameBoard
                 finalPosition = `${x + 1}${y}`;
                 this.grid[using[1]][using[0]] = 0; // remove the box (cost of this move)
 
-                this.queue.push(this.grid[y][x + 1]); // captured unit is inserted to queue
+                this.queue.push(breakUp(this.grid[y][x + 1])); // captured unit is inserted to queue
                 this.grid[y][x + 1] = this.grid[y][x]; // moves with your units
                 this.grid[y][x] = 0;
                 break;
@@ -638,7 +642,7 @@ class Board { // gameBoard
                 finalPosition = `${x}${y + 1}`;
                 this.grid[using[1]][using[0]] = 0; // remove the box (cost of this move)
 
-                this.queue.push(this.grid[y + 1][x]); // captured unit is inserted to queue
+                this.queue.push(breakUp(this.grid[y + 1][x])); // captured unit is inserted to queue
                 this.grid[y + 1][x] = this.grid[y][x]; // moves with your units
                 this.grid[y][x] = 0;
                 break;
@@ -646,7 +650,7 @@ class Board { // gameBoard
                 finalPosition = `${x - 1}${y}`;
                 this.grid[using[1]][using[0]] = 0; // remove the box (cost of this move)
 
-                this.queue.push(this.grid[y][x - 1]); // captured unit is inserted to queue
+                this.queue.push(breakUp(this.grid[y][x - 1])); // captured unit is inserted to queue
                 this.grid[y][x - 1] = this.grid[y][x]; // moves with your units
                 this.grid[y][x] = 0;
                 break;
@@ -779,7 +783,7 @@ class Board { // gameBoard
             finalPosition = `${x}${y}`
         }
         if (finalPosition) {
-            this.moves[finalPosition] = undefined;
+            delete this.moves[finalPosition];
         }
 
         this.unselect();
