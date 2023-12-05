@@ -231,7 +231,7 @@ class Board { // gameBoard
                             if (this.selected[0] === x && this.selected[1] === y) {
                                 c.fillStyle = "yellow";
                                 break; // stops rendering if the selected box is yellow
-                            } else if (newCoordinates && newCoordinates[0] === x && newCoordinates[1] === y && !(this.moveType === 3 && this.grid[this.selected[1]][this.selected[0]] !== this.units.your.slider[0])) { // ... except uMove for special unit
+                            } else if (newCoordinates && newCoordinates[0] === x && newCoordinates[1] === y && !(this.moveType === 3 && this.grid[this.selected[1]][this.selected[0]] !== this.units.your.slider[0])) { // ... except uMove for special unit // TODO err unit. ... you know
                                 c.fillStyle = "orange";
                                 break; // Stops rendering if the box is orange at the new coordinates
                             }
@@ -332,11 +332,9 @@ class Board { // gameBoard
         }
 
         this.canBeBoxPlaced = CheckCanBeBoxPlaced(); // this.canBeBoxPlaced = boolean if the box can be placed
-        const YourUnits = this.onMove ? this.units.your : this.units.enemy;
-        const EnemyUnits = this.onMove ? this.units.enemy : this.units.your;
         for (let x = 0; x < 9; x++) {
             for (let y = 0; y < 9; y++) {
-                if (Object.values(YourUnits).some(unit => unit.includes(this.grid[y][x])) || (y >= 6 && this.grid[y][x] === null)) { // you can only move your units
+                if (Object.values(this.units.your).some(unit => unit.includes(this.grid[y][x])) || (y >= 6 && this.grid[y][x] === null)) { // you can only move your units
                     const possibleMoves = [];
 
                     let endWithNothing = false; // if there is a space
@@ -423,19 +421,19 @@ class Board { // gameBoard
                         possibleMoves.push(4);
                     }
 
-                    if (this.grid[y - 1] !== undefined && Object.values(EnemyUnits).some(enemyValueArray => enemyValueArray.includes(this.grid[y - 1][x])) && ((y >= 7 && this.onMove) || (y <= 3 && !this.onMove))) { // catch up 
+                    if (this.grid[y - 1] !== undefined && Object.values(this.units.enemy).some(enemyValueArray => enemyValueArray.includes(this.grid[y - 1][x])) && ((y >= 7 && this.onMove) || (y <= 3 && !this.onMove))) { // catch up 
                         possibleMoves.push(5);
                     }
 
-                    if (Object.values(EnemyUnits).some(enemyValueArray => enemyValueArray.includes(this.grid[y][x + 1])) && ((y >= 6 && this.onMove) || (y <= 2 && !this.onMove))) { // catch right
+                    if (Object.values(this.units.enemy).some(enemyValueArray => enemyValueArray.includes(this.grid[y][x + 1])) && ((y >= 6 && this.onMove) || (y <= 2 && !this.onMove))) { // catch right
                         possibleMoves.push(6);
                     }
 
-                    if (this.grid[y + 1] !== undefined && Object.values(EnemyUnits).some(enemyValueArray => enemyValueArray.includes(this.grid[y + 1][x])) && ((y >= 5 && this.onMove) || (y <= 1 && !this.onMove))) { // catch down
+                    if (this.grid[y + 1] !== undefined && Object.values(this.units.enemy).some(enemyValueArray => enemyValueArray.includes(this.grid[y + 1][x])) && ((y >= 5 && this.onMove) || (y <= 1 && !this.onMove))) { // catch down
                         possibleMoves.push(7);
                     }
 
-                    if (Object.values(EnemyUnits).some(enemyValueArray => enemyValueArray.includes(this.grid[y][x - 1])) && ((y >= 6 && this.onMove) || (y <= 2 && !this.onMove0))) { // catch left
+                    if (Object.values(this.units.enemy).some(enemyValueArray => enemyValueArray.includes(this.grid[y][x - 1])) && ((y >= 6 && this.onMove) || (y <= 2 && !this.onMove0))) { // catch left
                         possibleMoves.push(8);
                     }
 
@@ -453,7 +451,7 @@ class Board { // gameBoard
 
                     const uMoves = []; // upgrade moves
 
-                    if (this.grid[y][x] === YourUnits.slider[0]) { // if is your slider
+                    if (this.grid[y][x] === this.units.your.slider[0]) { // if is your slider
                         if (checkArena(x, y - 3, 1, 3) || checkArena(x - 1, y - 1, 3, 1)) {
                             possibleMoves.push(9);
                         }
@@ -473,10 +471,10 @@ class Board { // gameBoard
                         uMoves.push(combineUpgrades(checkArena(x - 1, y - 1, 1, 3), checkArena(x - 3, y, 3, 1))); // uMoves left
                     } else { // your watcher or shooter
                         let turn;
-                        if (YourUnits.watcher.some(unit => unit === this.grid[y][x])) {
-                            turn = this.grid[y][x] - YourUnits.watcher[0];
-                        } else if (YourUnits.shooter.some(unit => unit === this.grid[y][x])) {
-                            turn = this.grid[y][x] - YourUnits.shooter[0];
+                        if (this.units.your.watcher.some(unit => unit === this.grid[y][x])) {
+                            turn = this.grid[y][x] - this.units.your.watcher[0];
+                        } else if (this.units.your.shooter.some(unit => unit === this.grid[y][x])) {
+                            turn = this.grid[y][x] - this.units.your.shooter[0];
                         }
 
                         switch (turn) {
@@ -817,7 +815,6 @@ class Board { // gameBoard
             }
         }
 
-        console.log(checkBoxesWin());
         if (Object.keys(this.moves).length === 0 && !this.canBeBoxPlaced) {
             this.winner(!this.onMove)
         } else if (checkBoxesWin() !== null) {
@@ -826,6 +823,33 @@ class Board { // gameBoard
         if (this.numberOfMoves !==-2 && ++this.numberOfMoves >= 2) { // switch players
             this.onMove = !this.onMove;
             this.numberOfMoves = 0;
+            if (this.onMove){ // set which units are your
+                this.units = {
+                    your: {
+                        slider: [2],
+                        watcher: [4, 5, 6, 7],
+                        shooter: [12, 13, 14, 15]
+                    },
+                    enemy: {
+                        slider: [3],
+                        watcher: [8, 9, 10, 11],
+                        shooter: [16, 17, 18, 19]
+                    }
+                }
+            } else {
+                this.units = {
+                    your: {
+                        slider: [3],
+                        watcher: [8, 9, 10, 11],
+                        shooter: [16, 17, 18, 19]
+                    },
+                    enemy: {
+                        slider: [2],
+                        watcher: [4, 5, 6, 7],
+                        shooter: [12, 13, 14, 15]
+                    }
+                }
+            }
             this.createMoves();
         } 
         this.init();
