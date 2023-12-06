@@ -183,7 +183,7 @@ class Board { // gameBoard
     }
 
     init() { // graphics initialization
-        const minSize = Math.min(window.innerHeight, window.innerWidth) * 0.9; // sets game board size
+        const minSize = Math.min(window.innerHeight, window.innerWidth) * 0.99; // sets game board size
         canvas.width = minSize;
         canvas.height = minSize;
         this.size = minSize / 9; // sets the cell size
