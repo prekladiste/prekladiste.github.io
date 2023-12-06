@@ -235,7 +235,7 @@ class Board { // gameBoard
                                 c.fillStyle = "orange";
                                 break; // Stops rendering if the box is orange at the new coordinates
                             }
-                            if (this.grid[y][x] === 1 && y >= 6 && this.moveType === 2 && this.selected && this.direction && this.using === undefined) {
+                            if (this.grid[y][x] === 1 && ((y >= 6 && this.onMove) || (y <= 2 && !this.onMove)) && this.moveType === 2 && this.selected && this.direction && this.using === undefined) {
                                 c.fillStyle = "red";
                             }
                         }
@@ -433,7 +433,7 @@ class Board { // gameBoard
                         possibleMoves.push(7);
                     }
 
-                    if (Object.values(this.units.enemy).some(enemyValueArray => enemyValueArray.includes(this.grid[y][x - 1])) && ((y >= 6 && this.onMove) || (y <= 2 && !this.onMove0))) { // catch left
+                    if (Object.values(this.units.enemy).some(enemyValueArray => enemyValueArray.includes(this.grid[y][x - 1])) && ((y >= 6 && this.onMove) || (y <= 2 && !this.onMove))) { // catch left
                         possibleMoves.push(8);
                     }
 
@@ -824,37 +824,9 @@ class Board { // gameBoard
         } else if (checkBoxesWin() !== null) {
             this.winner(checkBoxesWin())
         }
-        if (this.numberOfMoves !==-2 && ++this.numberOfMoves >= 2) { // switch players
-            this.onMove = !this.onMove;
-            this.numberOfMoves = 0;
-            if (this.onMove){ // set which units are your
-                this.units = {
-                    your: {
-                        slider: [2],
-                        watcher: [4, 5, 6, 7],
-                        shooter: [12, 13, 14, 15]
-                    },
-                    enemy: {
-                        slider: [3],
-                        watcher: [8, 9, 10, 11],
-                        shooter: [16, 17, 18, 19]
-                    }
-                }
-            } else {
-                this.units = {
-                    your: {
-                        slider: [3],
-                        watcher: [8, 9, 10, 11],
-                        shooter: [16, 17, 18, 19]
-                    },
-                    enemy: {
-                        slider: [2],
-                        watcher: [4, 5, 6, 7],
-                        shooter: [12, 13, 14, 15]
-                    }
-                }
-            }
-            this.createMoves();
+        this.numberOfMoves++;
+        if (this.queue.length === 0 && this.numberOfMoves !==-2 && this.numberOfMoves >= 2) { // switch players // TODO error po druhém tahu vkládání na cizí půlku (units se přehodí)
+            this.switchPlayers();
         } 
         this.init();
 
@@ -895,7 +867,10 @@ class Board { // gameBoard
         } else if (this.queue.length) { // if is something in queue
             if (((y >= 6 && y <= 8 && this.onMove) || (y >= 0 && y <= 2 && !this.onMove)) && this.grid[y][x] === 0 && this.queue[0] > 0) { // if you can insert it
                 this.grid[y][x] = this.queue[0]; // inserts it
-                this.queue.shift(); // removes it from the queue
+                this.queue.shift(); // removes it from the queu
+                if (this.numberOfMoves >= 2){ // switch players
+                    this.switchPlayers();
+                }
                 this.createMoves(); // makes moves
             } else {
                 throw error.cannotInsertUnit(this.queue); // something is broken
@@ -950,9 +925,11 @@ class Board { // gameBoard
                 this.move(this.selected, 12);
             }
         } else if (this.selected && this.direction) { // adds using
-            if (this.moveType === 2 && this.grid[y][x] === 1 && y >= 6) {
+            if (this.moveType === 2 && this.grid[y][x] === 1 && ((y >= 6 && this.onMove) || (y <= 2 && !this.onMove))) {
                 this.using = [x, y];
                 this.move(this.selected, this.direction, this.using)
+
+                // TODO přidej movetype 3 situace 3 (možnost vylepšení na oba)
             }
         } else { // moves with selected unit (or box) 
             if (this.selected === 1 && x >= 2 && x <= 6 && y >= 3 && y <= 5 && this.grid[y][x] === 0) { // moves with selected (box)
@@ -989,6 +966,7 @@ class Board { // gameBoard
                 }
             }
         }
+
         this.init(); // graphical initialization
     }
     unselect() {
@@ -1007,6 +985,38 @@ class Board { // gameBoard
             this.yourColor = "#b6b2a0"
             this.enemyColor = "#ffd900"
         }
+    }
+    switchPlayers () {
+        this.onMove = !this.onMove;
+        this.numberOfMoves = 0;
+        if (this.onMove) { // set which units are your
+            this.units = {
+                your: {
+                    slider: [2],
+                    watcher: [4, 5, 6, 7],
+                    shooter: [12, 13, 14, 15]
+                },
+                enemy: {
+                    slider: [3],
+                    watcher: [8, 9, 10, 11],
+                    shooter: [16, 17, 18, 19]
+                }
+            }
+        } else {
+            this.units = {
+                your: {
+                    slider: [3],
+                    watcher: [8, 9, 10, 11],
+                    shooter: [16, 17, 18, 19]
+                },
+                enemy: {
+                    slider: [2],
+                    watcher: [4, 5, 6, 7],
+                    shooter: [12, 13, 14, 15]
+                }
+            }
+        }
+        this.createMoves();
     }
 }
 
